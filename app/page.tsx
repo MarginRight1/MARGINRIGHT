@@ -75,12 +75,23 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") {
+    if (typeof window === "undefined" || !isAuthChecked || isAuthenticated) {
       return;
     }
 
     const revealElements = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]"));
     if (revealElements.length === 0) {
+      return;
+    }
+
+    const revealAll = () => {
+      revealElements.forEach((element) => {
+        element.classList.add("reveal-visible");
+      });
+    };
+
+    if (typeof IntersectionObserver === "undefined") {
+      revealAll();
       return;
     }
 
@@ -104,7 +115,7 @@ export default function Home() {
     return () => {
       observer.disconnect();
     };
-  }, [isAuthenticated]);
+  }, [isAuthChecked, isAuthenticated]);
 
   const openSaveModal = () => {
     setModalRegistration(registration.trim());
