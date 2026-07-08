@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getStoredAppraisal, saveAppraisal } from "./lib/appraisals";
 import { supabaseBrowser } from "./lib/supabase";
-import { lookupVehicleDetails, type VehicleDetails } from "./lib/vehicleLookup";
 import ConfidenceScore from "./components/ConfidenceScore";
 import { getStoredDealerSettings } from "./lib/dealerSettings";
 
@@ -36,9 +35,6 @@ export default function Home() {
   const [desiredProfit, setDesiredProfit] = useState(1500);
   const [mileage, setMileage] = useState(72000);
   const [loadedAppraisalId, setLoadedAppraisalId] = useState<string | null>(null);
-  const [vehicleDetails, setVehicleDetails] = useState<VehicleDetails | null>(null);
-  const [isLookingUp, setIsLookingUp] = useState(false);
-  const [lookupError, setLookupError] = useState<string | null>(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [modalRegistration, setModalRegistration] = useState("");
   const [notes, setNotes] = useState("");
@@ -129,47 +125,6 @@ export default function Home() {
 
     void loadDefaults();
   }, [appraisalQuery]);
-
-  useEffect(() => {
-    const query = registration.trim();
-    if (!query || query.length < 3) {
-      setVehicleDetails(null);
-      setLookupError(null);
-      return;
-    }
-
-    let active = true;
-    setIsLookingUp(true);
-    setLookupError(null);
-
-    lookupVehicleDetails(query)
-      .then((details) => {
-        if (active) {
-          setVehicleDetails(details);
-          if (details.make && details.make !== "—") {
-            const inferredType = details.vehicleType as VehicleType | undefined;
-            if (inferredType) {
-              setVehicleType(inferredType);
-            }
-          }
-        }
-      })
-      .catch((error: Error) => {
-        if (active) {
-          setVehicleDetails(null);
-          setLookupError(error.message || "That registration could not be found.");
-        }
-      })
-      .finally(() => {
-        if (active) {
-          setIsLookingUp(false);
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [registration]);
 
   const vatOnBid = (() => {
     if (vatStatus === "Margin Scheme") return 0;
@@ -321,20 +276,12 @@ export default function Home() {
                     />
                     <button
                       type="button"
-                      onClick={() => {
-                        setIsLookingUp(true);
-                        setLookupError(null);
-                        lookupVehicleDetails(registration.trim())
-                          .then((details) => setVehicleDetails(details))
-                          .catch(() => setLookupError("Lookup failed"))
-                          .finally(() => setIsLookingUp(false));
-                      }}
+                      disabled
                       className="rounded-2xl border border-emerald-500/30 bg-emerald-500/15 px-4 py-3 text-sm font-semibold text-emerald-300 transition hover:border-emerald-400 hover:bg-emerald-500/25"
                     >
-                      {isLookingUp ? "Searching…" : "Lookup"}
+                      Coming soon
                     </button>
                   </div>
-                  {lookupError ? <p className="text-xs text-rose-300">{lookupError}</p> : vehicleDetails?.make && vehicleDetails.make !== "—" ? <p className="text-xs text-zinc-400">{vehicleDetails.make} {vehicleDetails.model ? `• ${vehicleDetails.model}` : ""}</p> : null}
                 </label>
 
                 <label className="space-y-2 text-sm text-zinc-300">
