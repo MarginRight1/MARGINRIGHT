@@ -7,6 +7,13 @@ const missingConfigMessage = "Supabase environment variables are not configured 
 
 const fallbackAuth = {
   getSession: async () => ({ data: { session: null }, error: null }),
+  onAuthStateChange: () => ({
+    data: {
+      subscription: {
+        unsubscribe: () => {},
+      },
+    },
+  }),
   signInWithPassword: async () => ({ data: { user: null, session: null }, error: { message: missingConfigMessage } }),
   signUp: async () => ({ data: { user: null, session: null }, error: { message: missingConfigMessage } }),
   resetPasswordForEmail: async () => ({ data: {}, error: { message: missingConfigMessage } }),

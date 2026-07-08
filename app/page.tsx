@@ -22,6 +22,8 @@ const formatCurrency = (value: number) =>
 const formatPercent = (value: number) => `${value.toFixed(1)}%`;
 
 export default function Home() {
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [appraisalQuery, setAppraisalQuery] = useState("");
   const [registration, setRegistration] = useState("AB22 XYZ");
   const [vehicleType, setVehicleType] = useState<VehicleType>("Car");
@@ -40,6 +42,37 @@ export default function Home() {
   const [notes, setNotes] = useState("");
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkSession = async () => {
+      const { data } = await supabaseBrowser.auth.getSession();
+
+      if (!isMounted) {
+        return;
+      }
+
+      setIsAuthenticated(Boolean(data.session));
+      setIsAuthChecked(true);
+    };
+
+    void checkSession();
+
+    const { data: authListener } = supabaseBrowser.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) {
+        return;
+      }
+
+      setIsAuthenticated(Boolean(session));
+      setIsAuthChecked(true);
+    });
+
+    return () => {
+      isMounted = false;
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   const openSaveModal = () => {
     setModalRegistration(registration.trim());
@@ -201,6 +234,183 @@ export default function Home() {
           };
 
   const status = getStatus();
+
+  if (!isAuthChecked) {
+    return null;
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(34,197,94,0.2),_transparent_38%),radial-gradient(circle_at_bottom_right,_rgba(16,185,129,0.12),_transparent_44%),#050816] text-zinc-100">
+        <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+          <section className="overflow-hidden rounded-[34px] border border-white/10 bg-zinc-950/80 p-6 shadow-[0_30px_120px_rgba(0,0,0,0.45)] backdrop-blur sm:p-8 lg:p-10">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-sm font-semibold text-emerald-400">
+                  MR
+                </div>
+                <div>
+                  <p className="text-xl font-semibold tracking-tight text-white">
+                    Margin<span className="text-emerald-400">Right</span>
+                  </p>
+                  <p className="text-sm text-zinc-400">Auction buying calculator</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href="/auth/login"
+                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-zinc-200 transition hover:border-white/20 hover:bg-white/10"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/auth/signup"
+                  className="rounded-2xl border border-emerald-500/30 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition hover:border-emerald-400 hover:bg-emerald-500/25"
+                >
+                  Create account
+                </Link>
+              </div>
+            </div>
+
+            <div className="mt-8 grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
+              <div>
+                <p className="inline-flex rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">
+                  Built for UK independent dealers
+                </p>
+                <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white sm:text-5xl">
+                  Know your true maximum bid before you raise your hand.
+                </h1>
+                <p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-300 sm:text-base">
+                  MarginRight is an auction buying calculator for UK independent dealers. It brings retail value, live bid pressure and deal costs into one instant decision surface so you avoid overpaying and protect margin on every vehicle.
+                </p>
+
+                <div className="mt-7 flex flex-wrap gap-3">
+                  <Link
+                    href="/auth/signup"
+                    className="rounded-2xl border border-emerald-500/30 bg-emerald-500/15 px-5 py-3 text-sm font-semibold text-emerald-300 transition hover:border-emerald-400 hover:bg-emerald-500/25"
+                  >
+                    Create account
+                  </Link>
+                  <Link
+                    href="/auth/login"
+                    className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-zinc-200 transition hover:border-white/20 hover:bg-white/10"
+                  >
+                    Login
+                  </Link>
+                </div>
+              </div>
+
+              <div className="rounded-[28px] border border-white/10 bg-black/20 p-5 sm:p-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-400">What it factors in</p>
+                <ul className="mt-4 space-y-2 text-sm text-zinc-300">
+                  <li>Retail value and current bid</li>
+                  <li>Auction fees, prep costs and transport</li>
+                  <li>VAT scheme treatment and VAT status</li>
+                  <li>Desired profit target and ROI visibility</li>
+                </ul>
+                <p className="mt-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200">
+                  Vehicle lookup is coming soon.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <article className="rounded-[24px] border border-white/10 bg-zinc-950/75 p-5">
+              <p className="text-sm font-semibold text-white">Maximum bid clarity</p>
+              <p className="mt-2 text-sm leading-6 text-zinc-400">
+                Instantly calculate the ceiling bid that still supports your target margin.
+              </p>
+            </article>
+            <article className="rounded-[24px] border border-white/10 bg-zinc-950/75 p-5">
+              <p className="text-sm font-semibold text-white">Margin protection</p>
+              <p className="mt-2 text-sm leading-6 text-zinc-400">
+                See projected profit and gross margin before committing to stock.
+              </p>
+            </article>
+            <article className="rounded-[24px] border border-white/10 bg-zinc-950/75 p-5">
+              <p className="text-sm font-semibold text-white">ROI focus</p>
+              <p className="mt-2 text-sm leading-6 text-zinc-400">
+                Keep buying disciplined with a live ROI readout as bids move.
+              </p>
+            </article>
+            <article className="rounded-[24px] border border-white/10 bg-zinc-950/75 p-5">
+              <p className="text-sm font-semibold text-white">Post-login tools</p>
+              <p className="mt-2 text-sm leading-6 text-zinc-400">
+                Saved appraisals and your dealer dashboard are available after login.
+              </p>
+            </article>
+          </section>
+
+          <section className="mt-6 rounded-[30px] border border-white/10 bg-zinc-950/78 p-6 sm:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-400">How it works</p>
+            <div className="mt-5 grid gap-4 md:grid-cols-3">
+              <article className="rounded-[22px] border border-white/10 bg-black/20 p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-zinc-500">Step 1</p>
+                <p className="mt-2 text-base font-semibold text-white">Enter live auction numbers</p>
+                <p className="mt-2 text-sm leading-6 text-zinc-400">
+                  Add retail value, current bid, fees, prep, transport and VAT setup.
+                </p>
+              </article>
+              <article className="rounded-[22px] border border-white/10 bg-black/20 p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-zinc-500">Step 2</p>
+                <p className="mt-2 text-base font-semibold text-white">Set your target return</p>
+                <p className="mt-2 text-sm leading-6 text-zinc-400">
+                  Define desired profit and instantly view projected profit, margin and ROI.
+                </p>
+              </article>
+              <article className="rounded-[22px] border border-white/10 bg-black/20 p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-zinc-500">Step 3</p>
+                <p className="mt-2 text-base font-semibold text-white">Bid with confidence</p>
+                <p className="mt-2 text-sm leading-6 text-zinc-400">
+                  Use your max-bid number to avoid overpaying and protect dealer margin.
+                </p>
+              </article>
+            </div>
+          </section>
+
+          <section className="mt-6 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="rounded-[30px] border border-white/10 bg-zinc-950/78 p-6 sm:p-8">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-400">Pricing</p>
+              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white">Early beta pricing</h2>
+              <p className="mt-3 max-w-xl text-sm leading-7 text-zinc-400">
+                Start with MarginRight at a founder-friendly rate while we expand vehicle lookup, reporting and team workflows.
+              </p>
+
+              <div className="mt-6 rounded-[24px] border border-emerald-500/30 bg-emerald-500/10 p-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">Beta plan</p>
+                <p className="mt-2 text-4xl font-bold text-white">
+                  GBP 19<span className="text-base font-medium text-zinc-300"> / month</span>
+                </p>
+                <p className="mt-2 text-sm text-zinc-300">Full calculator access, saved appraisals, and dealer dashboard.</p>
+              </div>
+            </div>
+
+            <div className="rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(9,12,24,0.98),rgba(5,8,16,0.96))] p-6 sm:p-8">
+              <h3 className="text-2xl font-semibold tracking-tight text-white">Ready to protect your buying margin?</h3>
+              <p className="mt-3 text-sm leading-7 text-zinc-400">
+                Create your account to unlock saved appraisals and your dealer dashboard.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link
+                  href="/auth/signup"
+                  className="rounded-2xl border border-emerald-500/30 bg-emerald-500/15 px-5 py-3 text-sm font-semibold text-emerald-300 transition hover:border-emerald-400 hover:bg-emerald-500/25"
+                >
+                  Create account
+                </Link>
+                <Link
+                  href="/auth/login"
+                  className="rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-zinc-200 transition hover:border-white/20 hover:bg-white/10"
+                >
+                  Login
+                </Link>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(34,197,94,0.16),_transparent_35%),#050816] text-zinc-100">
